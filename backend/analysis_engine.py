@@ -1,11 +1,12 @@
 """
 ChangeBlast Analysis Engine
-Performs static search across the sample repo to find blast radius of a proposed change.
+
+Scans the sample repository for signals related to a proposed change and
+produces structured evidence, impact classification, risk score, and a
+step-by-step change plan.
 """
-import os
 import re
-import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict
 from pathlib import Path
 
 # ---- Patterns for "Replace User.id from Integer to UUID" ----
@@ -314,16 +315,15 @@ def calculate_risk(impact: Dict[str, List], evidence: List[Dict]) -> Dict:
 
 def build_summary(impact: Dict, evidence: List[Dict]) -> Dict:
     """Build summary counts for the analysis."""
-    all_files = set(ev["file"] for ev in evidence)
-    direct = [ev for ev in evidence if ev["relationship"] == "direct_dependency"]
+    direct   = [ev for ev in evidence if ev["relationship"] == "direct_dependency"]
     indirect = [ev for ev in evidence if ev["relationship"] != "direct_dependency"]
 
     return {
-        "direct_files": len(set(ev["file"] for ev in direct)),
-        "indirect_files": len(set(ev["file"] for ev in indirect)),
-        "api_contracts": len(impact.get("api", [])),
+        "direct_files":       len(set(ev["file"] for ev in direct)),
+        "indirect_files":     len(set(ev["file"] for ev in indirect)),
+        "api_contracts":      len(impact.get("api", [])),
         "database_migrations": len(impact.get("database", [])),
-        "tests_affected": len(impact.get("tests", [])),
+        "tests_affected":     len(impact.get("tests", [])),
     }
 
 
