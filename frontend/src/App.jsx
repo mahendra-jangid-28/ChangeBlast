@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 const API = import.meta.env.VITE_API_URL || ''
 // ─────────────────────────────────────────
@@ -182,21 +182,19 @@ const PROGRESS_STEPS = [
 ]
 
 function ProgressScreen({ analysisId, changeText, onComplete }) {
-  const [status, setStatus] = useState('queued')
   const [fakeStep, setFakeStep] = useState(0)
-  const intervalRef = useRef(null)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    // Advance fake steps for UX
+    // Cosmetic step advance — gives the user visual feedback while polling
     const stepInterval = setInterval(() => {
       setFakeStep(s => Math.min(s + 1, PROGRESS_STEPS.length - 2))
     }, 600)
 
-    // Poll real status
+    // Poll the real status endpoint until completed or failed
     const pollInterval = setInterval(async () => {
       try {
         const s = await fetchStatus(analysisId)
-        setStatus(s.status)
         if (s.status === 'completed' || s.status === 'failed') {
           clearInterval(pollInterval)
           clearInterval(stepInterval)
@@ -206,10 +204,12 @@ function ProgressScreen({ analysisId, changeText, onComplete }) {
               const data = await fetchAnalysis(analysisId)
               onComplete(data)
             }, 600)
+          } else {
+            setFailed(true)
           }
         }
-      } catch (e) {
-        // keep polling
+      } catch (_) {
+        // network hiccup — keep polling
       }
     }, 800)
 
@@ -220,6 +220,18 @@ function ProgressScreen({ analysisId, changeText, onComplete }) {
   }, [analysisId])
 
   const activeIdx = fakeStep
+
+  if (failed) {
+    return (
+      <div className="progress-screen">
+        <div className="progress-box">
+          <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
+          <h2 className="progress-title" style={{ color: 'var(--red)' }}>Analysis failed</h2>
+          <p className="progress-sub">Something went wrong on the server. Please try again.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="progress-screen">
@@ -582,7 +594,7 @@ function ChangePlan({ plan }) {
 // ─────────────────────────────────────────
 // SUMMARY STATS
 // ─────────────────────────────────────────
-function SummaryStats({ summary, risk }) {
+function SummaryStats({ summary }) {
   const stats = [
     { label: 'Direct Files', value: summary.direct_files ?? 0 },
     { label: 'Indirect Files', value: summary.indirect_files ?? 0 },
@@ -622,7 +634,7 @@ function Dashboard({ data, onBack }) {
         </div>
 
         {/* Summary stats */}
-        <SummaryStats summary={data.summary || {}} risk={data.risk || {}} />
+        <SummaryStats summary={data.summary || {}} />
 
         <div style={{ height: 20 }} />
 
