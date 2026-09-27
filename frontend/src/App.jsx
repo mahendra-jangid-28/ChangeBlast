@@ -331,7 +331,7 @@ function BlastGraph({ nodes, edges }) {
 
   return (
     <div>
-      <div className="graph-canvas" style={{ height: H }}>
+      <div className="graph-canvas" style={{ height: H, position: 'relative' }}>
         <svg
           ref={svgRef}
           width="100%"

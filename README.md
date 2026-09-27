@@ -1,4 +1,4 @@
-﻿# 💥 ChangeBlast
+# 💥 ChangeBlast
 
 > **See the blast radius before you change the code.**
 
@@ -103,13 +103,14 @@ start.bat
 2. Click **"Analyze a Change"**
 3. Click the demo pill → *"Replace User.id from Integer to UUID"*
 4. Hit **"Analyze Blast Radius"**
-5. Watch progress → Dashboard
+5. Watch the animated progress → lands on the Dashboard
 
 **Expected result:**
-- 🔴 Risk: **HIGH** (score 12)
-- Reasons: *Public API affected · Database migration required · Auth/security path touched*
-- 150+ evidence findings across code, API, DB, frontend, and tests
-- 6-step ordered change plan
+- 🔴 Risk: **HIGH** (score 14)
+- Reasons: *Public API affected · Database migration required · Auth/security path touched · 12 dependent files · Frontend/backend boundary crossed · 38 tests*
+- 150+ evidence findings across all 6 tabs: Code, API, Database, Frontend, Tests, History
+- 7-step ordered change plan (DB → API → Code → Auth → Frontend → Tests → Deploy)
+- Blast radius graph with 14 nodes and 13 edges
 
 ---
 
@@ -117,7 +118,7 @@ start.bat
 
 ### `POST /api/v1/analysis`
 
-Submit a proposed change for analysis.
+Submit a proposed change for analysis. Returns immediately with `analysis_id`; poll status endpoint until `completed`.
 
 **Request:**
 ```json
@@ -141,7 +142,7 @@ Submit a proposed change for analysis.
 
 Retrieve the full analysis result once `status` is `completed`.
 
-**Response (200 OK):**
+**Response (200 OK, abbreviated):**
 ```json
 {
   "analysis_id": "cb_9492e010",
@@ -156,40 +157,37 @@ Retrieve the full analysis result once `status` is `completed`.
   },
   "risk": {
     "level": "HIGH",
-    "score": 12,
+    "score": 14,
     "reasons": [
       "Public API affected",
       "Database migration required",
       "Auth/security path touched",
       "12 dependent files affected",
+      "Frontend/backend boundary crossed",
       "38 tests affected"
     ]
   },
-  "impact": {
-    "code": [ { "file": "users/service.py", "line": 11, "description": "...", "evidence_id": "ev_001" } ],
-    "api": [],
-    "database": [],
-    "frontend": [],
-    "tests": [],
-    "history": []
-  },
   "graph": {
-    "nodes": [ { "id": "core_user_id", "label": "User.id", "category": "core" } ],
-    "edges": [ { "source": "core_user_id", "target": "db_users", "relationship": "migrates" } ]
+    "nodes": [{ "id": "core_user_id", "label": "User.id", "category": "core" }],
+    "edges": [{ "source": "core_user_id", "target": "db_users", "relationship": "migrates" }]
   },
   "change_plan": [
     { "order": 1, "area": "database", "title": "Update database schema", "description": "..." }
   ],
   "evidence": [
-    { "id": "ev_001", "source": "code", "file": "users/service.py", "line_start": 11, "line_end": 11,
-      "relationship": "direct_dependency", "description": "Directly references User.id (Integer)" }
+    {
+      "id": "ev_001", "source": "code", "file": "users/service.py",
+      "line_start": 11, "line_end": 11,
+      "relationship": "direct_dependency",
+      "description": "Directly references User.id (Integer)"
+    }
   ]
 }
 ```
 
 ### `GET /api/v1/analysis/{analysis_id}/status`
 
-Lightweight status poll: `queued` → `analyzing` → `completed` | `failed`
+Lightweight status poll. Values: `queued` → `analyzing` → `completed` | `failed`
 
 ---
 
@@ -212,4 +210,4 @@ Deterministic — no LLM involved in the score:
 
 ## 🏁 Hackathon Note
 
-This is a **hackathon MVP** — built for a single working demo. The static analysis targets the `sample_repo/` directory (a seeded e-commerce codebase). In a production version, this would be replaced with a real repo ingestion pipeline, multi-language AST parsing, and a proper database.
+This is a **hackathon MVP** — built for a single working demo. The static analysis targets the `sample_repo/` directory (a seeded e-commerce codebase). In a production version this would be replaced with a real repo ingestion pipeline, multi-language AST parsing, and a proper database.

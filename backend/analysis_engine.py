@@ -66,21 +66,29 @@ SIGNAL_PATTERNS = {
 }
 
 # Map file path patterns to categories
+# ORDER MATTERS: more-specific patterns must come before broader ones.
 CATEGORY_MAP = {
+    # Frontend takes priority over api/ prefix
+    "frontend_components": "frontend",
+    "components": "frontend",
+    ".jsx": "frontend",
+    ".tsx": "frontend",
+    # Tests
     "tests/": "tests",
     "test_": "tests",
+    # Database
     "migrations/": "database",
     "migration": "database",
     "models.py": "database",
     "schema.py": "database",
-    "routes.py": "api",
-    "api/": "api",
-    "frontend": "frontend",
-    "components": "frontend",
-    ".jsx": "frontend",
-    ".tsx": "frontend",
+    # Auth (subset of api, but keep explicit)
     "auth/": "api",
     "security.py": "api",
+    # API routes
+    "routes.py": "api",
+    "api/": "api",
+    # Generic frontend keyword
+    "frontend": "frontend",
 }
 
 REPO_DIR = Path(__file__).parent / "sample_repo"
